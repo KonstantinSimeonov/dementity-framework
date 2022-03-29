@@ -1,6 +1,7 @@
 import { varchar, integer, boolean } from "./definitions";
 import { AnyTable } from "../types";
 import { entries } from "../util/entries";
+import {ColumnType} from ".";
 
 type VarcharModel = {
   meta: ReturnType<typeof varchar>
@@ -65,7 +66,7 @@ export const boolean_model = (
     boolean_model(meta, `${value} and ${right.value}`, name)
 })
 
-export const create_model = <Table extends AnyTable>(table: Table) =>
+export const create_model = <Table extends AnyTable = AnyTable>(table: Table) =>
   Object.fromEntries(
     entries(table.schema).map(([name, c]) => {
       switch (c.type) {
@@ -86,3 +87,13 @@ export const create_model = <Table extends AnyTable>(table: Table) =>
           : typeof integer_model
     >;
   };
+
+export type AnyModel = ReturnType<typeof boolean_model | typeof integer_model | typeof varchar_model>
+
+export type ToJS<T extends AnyTable> = {
+  [k in keyof T['schema']]: ({
+    varchar: string
+    integer: number
+    boolean: boolean
+  }[T['schema'][k]['type']])
+}
