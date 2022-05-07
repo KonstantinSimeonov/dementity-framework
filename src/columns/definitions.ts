@@ -1,11 +1,14 @@
 // TODO: union type
 type CommonColumnConstraints = {
-  not_null?: boolean
-  primary_key?: true
-  unique?: boolean
-}
+  not_null?: boolean;
+  primary_key?: true;
+  unique?: boolean;
+};
 
-export const varchar = (length: number, constraints: CommonColumnConstraints = {}) =>
+export const varchar = (
+  length: number,
+  constraints: CommonColumnConstraints = {}
+) =>
   ({
     constraints,
     length,
@@ -20,8 +23,9 @@ export const integer = (constraints: CommonColumnConstraints = {}) =>
     sql_type: `integer`,
   } as const);
 
-export const boolean = (constraints: CommonColumnConstraints = {}) => ({
-  constraints,
-  type: `boolean`,
-  sql_type: `boolean`
-}) as const
+export const boolean = (constraints: CommonColumnConstraints = {}) =>
+  ({
+    constraints,
+    type: `boolean`,
+    sql_type: `boolean`,
+  } as const);
