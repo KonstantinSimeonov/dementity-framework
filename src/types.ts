@@ -1,3 +1,7 @@
-import { AnyModel, ColumnType } from "./columns";
+import { AnyModel, ColumnType } from './columns';
 
-export type AnyTable = { name: string; model: Record<string, AnyModel>; schema: Record<string, ColumnType> };
+export type AnyTable = {
+  name: string;
+  model: Record<string, AnyModel>;
+  schema: Record<string, ColumnType>;
+};

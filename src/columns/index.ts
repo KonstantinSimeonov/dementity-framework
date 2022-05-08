@@ -1,7 +1,7 @@
-import * as defs from "./definitions";
+import * as defs from './definitions';
 
-export * from "./definitions";
+export * from './definitions';
 
 export type ColumnType = ReturnType<typeof defs[keyof typeof defs]>;
 
-export * from "./models";
+export * from './models';
