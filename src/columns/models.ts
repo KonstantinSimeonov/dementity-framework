@@ -33,7 +33,7 @@ export const varchar_model = (
   startsWith: (m) =>
     boolean_model(
       boolean(),
-      `${value} like '${typeof m === `string` ? m : m.value}'`,
+      `${value} like '${typeof m === `string` ? m : m.value}%'`,
       name
     ),
   eq: m =>
@@ -79,12 +79,13 @@ export const boolean_model = (
   and: (right) => boolean_model(meta, `${value} and ${right.value}`, name),
 });
 
-export const create_model = <Schema extends AnyTable["schema"]>(
-  schema: Schema
+export const create_model = <Schema extends AnyTable["schema"], Name extends string>(
+  schema: Schema,
+  table_name: Name
 ) =>
   Object.fromEntries(
     entries(schema).map(([name, c]) => {
-      const n = name as string;
+      const n = `${table_name}.${name}`
       switch (c.type) {
         case "varchar":
           return [name, varchar_model(c, n, n)];

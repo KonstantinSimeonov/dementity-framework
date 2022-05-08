@@ -4,14 +4,14 @@ import * as mysql from "mysql2/promise";
 import { insert } from "./query/insert";
 import { select, select1 } from "./query/select";
 
-const users = make_schema(`users`, {
+const Users = make_schema(`users`, {
   id: varchar(30, { primary_key: true }),
   name: varchar(30, { not_null: true }),
   age: integer(),
   admin: boolean(),
 });
 
-const pets = make_schema(`pets` as const, {
+const Pets = make_schema(`pets` as const, {
   id: varchar(30, { primary_key: true }),
   name: varchar(30, { not_null: true }),
   type: varchar(30, {}),
@@ -19,7 +19,7 @@ const pets = make_schema(`pets` as const, {
   fav_treat_id: varchar(30)
 } as const)
 
-const treats = make_schema(`treats`, {
+const Treats = make_schema(`treats`, {
   id: varchar(30, { primary_key: true }),
   name: varchar(30),
   calories: integer()
@@ -39,11 +39,6 @@ const pool = mysql.createPool({
   waitForConnections: true,
 });
 
-type Test<T extends Record<string, number>> = {
-  join<A extends { a: string; b: number }>(x: A): Test<T & Record<A['a'], A['b']>>
-  x: T
-}
-
 ;(async () => {
   //const create_table_query = create_table(sc);
   //console.info(create_table_query);
@@ -54,18 +49,20 @@ type Test<T extends Record<string, number>> = {
   //]);
   //console.info(q, p);
   //console.log(await pool.query(q, p));
-  const s = users
-    .join(pets, j => {
+  const s = Users
+    .join(Pets, j => {
        return j.pets.owner_id.eq(j.users.id)
     })
-    .join(treats, j => j.treats.id.eq(j.pets.fav_treat_id))
+    .join(Treats, j => j.treats.id.eq(j.pets.fav_treat_id))
 
-  s.select((users, { pets, treats }) => ({
+  const y = s.select((users, { pets, treats }) => ({
     same_name: pets.name.eq(users.name),
     t: treats.name
   }))
+    .where(q => q.users.name.startsWith("Ivan"))
+    .limit(5)
 
-  console.log(s.to_sql())
+  console.log(y.to_sql())
 
   //await pool.end();
 })();
