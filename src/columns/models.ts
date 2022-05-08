@@ -66,6 +66,7 @@ export type BooleanModel = {
   value: string;
   name: string;
   and: (right: BooleanModel) => BooleanModel;
+  or: (right: BooleanModel) => BooleanModel;
 };
 
 export const boolean_model = (
@@ -77,6 +78,7 @@ export const boolean_model = (
   name,
   value,
   and: (right) => boolean_model(meta, `${value} and ${right.value}`, name),
+  or: (right) => boolean_model(meta, `${value} or ${right.value}`, name)
 });
 
 export const create_model = <Schema extends AnyTable["schema"], Name extends string>(

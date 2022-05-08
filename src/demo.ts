@@ -63,6 +63,7 @@ const pool = mysql.createPool({
     .limit(5)
 
   console.log(y.to_sql())
+  console.log(s.to_sql())
 
   //await pool.end();
 })();

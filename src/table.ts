@@ -3,8 +3,6 @@ import { AnyModel, BooleanModel, ColumnType, VarcharModel } from "./columns";
 import { AnyTable } from "./types";
 import { create_model } from "./columns";
 
-type AnyJoin = { on: BooleanModel; table: AnyTable };
-
 type AnyRecord = Record<string, AnyModel>;
 
 export const make_schema = <
@@ -31,56 +29,67 @@ export const make_schema = <
   });
 };
 
-type BaseTable = {
+type BaseQuery = {
   name: string;
   model: AnyRecord;
   om: AnyRecord;
   filter?: BooleanModel;
   joins: {};
   limit?: number
-  on: any;
+  selected?: AnyRecord
+  on: { on: BooleanModel; table: AnyTable }[];
 };
 
 type MT<
-  Table extends BaseTable,
+  Query extends BaseQuery,
   Joins extends Record<string, AnyRecord>,
   debug = 1
-> = Omit<Table, "select" | "join" | "where" | "to_sql" | "joins"> & {
+> = Omit<Query, "select" | "join" | "where" | "to_sql" | "joins"> & {
   _debug?: debug;
   joins: Joins;
+
   select<T extends AnyRecord>(
-    fn: (model: Table["model"], joins: Joins) => T
-  ): Omit<MT<Table, Joins>, "model"> & { model: T };
+    fn: (model: Query["model"], joins: Joins) => T
+  ): Omit<MT<Query, Joins>, "selected"> & { selected: T };
 
   join<T1 extends AnyTable>(
     t1: T1,
     fn: (
       joins: Joins &
-        Record<Table["name"], Table["model"]> &
+        Record<Query["name"], Query["model"]> &
         Record<T1["name"], T1["model"]>
     ) => BooleanModel
   ): MT<
-    Table,
-    Record<Table["name"], Table["model"]> &
+    Query,
+    Record<Query["name"], Query["model"]> &
       Joins &
       Record<T1["name"], T1["model"]>
   >;
 
   where(
     fn: (model: Joins) => BooleanModel
-  ): Omit<MT<Table, Joins>, "filter"> & { filter: BooleanModel };
+  ): Omit<MT<Query, Joins>, "filter"> & { filter: BooleanModel };
 
-  limit<N extends number>(limit: N): Omit<MT<Table, Joins>, "limit"> & { limit: N }
+  limit<N extends number>(limit: N): Omit<MT<Query, Joins>, "limit"> & { limit: N }
 
   to_sql(): string;
 };
 
-export const make_table = <Tab extends BaseTable>(t: Tab): MT<Tab, {}> => {
+const to_sql = {
+  limit: (t: BaseQuery) => t.limit ? `LIMIT ${t.limit | 0}` : ``,
+  fields: (t: BaseQuery) => !t.selected
+    ? `*`
+    : entries(t.selected).map(([name, { value }]) => `${value} as ${name}`).join(`, `),
+  joins: (t: BaseQuery) => t.on.map(jt => `join ${jt.table.name} on ${jt.on.value}`).join(` `),
+  filter: (t: BaseQuery) => t.filter ? `where ${t.filter.value}` : ``
+}
+
+export const make_table = <Tab extends BaseQuery>(t: Tab): MT<Tab, {}> => {
   return {
     ...t,
     original_model: t.model,
 
-    select: (fn) => make_table({ ...t, model: fn(t.model, t.joins) }),
+    select: (fn) => make_table({ ...t, selected: fn(t.model, t.joins) }),
 
     where: (fn) => make_table({ ...t, filter: fn(t.joins) }),
 
@@ -102,21 +111,17 @@ export const make_table = <Tab extends BaseTable>(t: Tab): MT<Tab, {}> => {
     limit: (limit) => make_table({ ...t, limit }),
 
     to_sql: () => {
-      const fields = entries(t.model);
-      const sql_fields = fields
-        .map(
-          ([name, { value }]) =>
-            `${value} as ${name}`
-        )
-        .join(`, `);
+      const query_parts = [
+        `select`,
+        to_sql.fields(t),
+        `from`,
+        t.name,
+        to_sql.joins(t),
+        to_sql.filter(t),
+        to_sql.limit(t),
+      ]
 
-      const joins = t.on.map(
-        (jt: any) => `join ${jt.table.name} on ${jt.on.value}`
-      ).join(' ');
-
-      return `select ${sql_fields} from ${t.name} ${joins} ${
-        t.filter ? ` where ${t.filter.value}` : ``
-      } ${t.limit ? `limit ${t.limit}` : ``};`;
+      return `${query_parts.filter(Boolean).join(` `)};`;
     },
   };
 };
