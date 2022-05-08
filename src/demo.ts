@@ -2,7 +2,6 @@ import { varchar, integer, boolean } from './columns';
 import { create_table, make_schema } from './table';
 import * as mysql from 'mysql2/promise';
 import { insert } from './query/insert';
-import { select, select1 } from './query/select';
 
 const Users = make_schema(`users`, {
   id: varchar(30, { primary_key: true }),
@@ -11,16 +10,13 @@ const Users = make_schema(`users`, {
   admin: boolean(),
 });
 
-const Pets = make_schema(
-  `pets`,
-  {
-    id: varchar(30, { primary_key: true }),
-    name: varchar(30, { not_null: true }),
-    type: varchar(30, {}),
-    owner_id: varchar(30),
-    fav_treat_id: varchar(30),
-  }
-);
+const Pets = make_schema(`pets`, {
+  id: varchar(30, { primary_key: true }),
+  name: varchar(30, { not_null: true }),
+  type: varchar(30, {}),
+  owner_id: varchar(30),
+  fav_treat_id: varchar(30),
+});
 
 const Treats = make_schema(`treats`, {
   id: varchar(30, { primary_key: true }),
