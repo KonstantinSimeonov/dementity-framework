@@ -28,8 +28,6 @@ export const make_schema = <
   });
 };
 
-
-
 const to_sql = {
   limit: (t: BaseQuery) => (t.limit ? `LIMIT ${t.limit | 0}` : ``),
   fields: (t: BaseQuery) =>
